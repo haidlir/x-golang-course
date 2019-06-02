@@ -316,6 +316,21 @@ func TestSiswaHandler(t *testing.T) {
 		}
 		resp.Body.Close()
 	})
+	// Update Specific Siswa Scenario, NOK 2
+	t.Run("Update Specific Siswa Siswa NOK 2", func(t *testing.T) {
+		db.ErrMap["UpdateSiswa"] = fmt.Errorf("Intentionally Error")
+		var jsonRequest = []byte(`{"nama":"Azzam", kelas":10}`)
+		// Hit API Endpoint
+		req, _ := http.NewRequest(http.MethodPut, specificTargetPath, bytes.NewBuffer(jsonRequest))
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatalf("Unable to hit API: %v", err)
+		}
+		if resp.StatusCode != http.StatusBadRequest {
+			t.Fatalf("status code %v instead of 400", resp.StatusCode)
+		}
+		resp.Body.Close()
+	})
 }
 
 func extractContent(encodedBody []byte, content interface{}) (metaResp *nmodel.MetaResponse, errResp *nmodel.Error, err error) {

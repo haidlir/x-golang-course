@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -35,144 +36,108 @@ type Handler struct {
 
 // AddSiswa handles the POST SISWA
 func (h *Handler) AddSiswa(w http.ResponseWriter, r *http.Request) {
+	resp := nmodel.NewResponseFormat()
 	// Get the Body
 	decodedBody := nmodel.Siswa{}
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&decodedBody)
 	if err != nil {
-		singleErrResp := nmodel.Error{
-			Title:  errorDecodingJSONReq,
-			Detail: errorDecodingJSONReq,
-		}
-		sendNOKResponse(http.StatusBadRequest, []nmodel.Error{singleErrResp}, w)
+		resp.AddError(errorDecodingJSONReq, errorDecodingJSONReq)
+		sendResponse(http.StatusBadRequest, resp, w, r)
 		return
 	}
 	addedSiswa, err := h.db.AddSiswa(decodedBody)
 	if err != nil {
-		singleErrResp := nmodel.Error{
-			Title:  errorAddNewSiswa,
-			Detail: fmt.Sprintf("%v", err),
-		}
-		sendNOKResponse(http.StatusBadRequest, []nmodel.Error{singleErrResp}, w)
+		resp.AddError(errorAddNewSiswa, err.Error())
+		sendResponse(http.StatusBadRequest, resp, w, r)
 		return
 	}
-	sendOKResponse(http.StatusCreated, addedSiswa, nil, w)
+	resp.SetData(addedSiswa)
+	sendResponse(http.StatusCreated, resp, w, r)
 	return
 }
 
 // GetAllSiswa handles the GET ALL SISWA
 func (h *Handler) GetAllSiswa(w http.ResponseWriter, r *http.Request) {
+	resp := nmodel.NewResponseFormat()
 	daftarSiswa := h.db.GetAllSiswa()
 	if len(daftarSiswa) <= 0 {
-		singleErrResp := nmodel.Error{
-			Title:  emptySiswa,
-			Detail: emptySiswa,
-		}
-		sendNOKResponse(http.StatusInternalServerError, []nmodel.Error{singleErrResp}, w)
+		resp.AddError(emptySiswa, emptySiswa)
+		sendResponse(http.StatusInternalServerError, resp, w, r)
 		return
 	}
-	sendOKResponse(http.StatusOK, daftarSiswa, nil, w)
+	resp.SetData(daftarSiswa)
+	sendResponse(http.StatusOK, resp, w, r)
 	return
 }
 
 // GetDetailSiswa handles the GET SPECIFIC SISWA
 func (h *Handler) GetDetailSiswa(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	var id int
-	if val, ok := vars["id"]; ok {
-		convertedVal, err := strconv.Atoi(val)
-		if err != nil {
-			singleErrResp := nmodel.Error{
-				Title:  errorParsingID,
-				Detail: errorParsingID,
-			}
-			sendNOKResponse(http.StatusInternalServerError, []nmodel.Error{singleErrResp}, w)
-			return
-		}
-		id = convertedVal
+	resp := nmodel.NewResponseFormat()
+	id, err := getVarsID(r)
+	if err != nil {
+		resp.AddError(errorParsingID, errorParsingID)
+		sendResponse(http.StatusInternalServerError, resp, w, r)
+		return
 	}
 	siswa := h.db.GetDetailSiswa(id)
 	if siswa == nil {
-		singleErrResp := nmodel.Error{
-			Title:  errorFindingID,
-			Detail: errorFindingID,
-		}
-		sendNOKResponse(http.StatusInternalServerError, []nmodel.Error{singleErrResp}, w)
+		resp.AddError(errorFindingID, errorFindingID)
+		sendResponse(http.StatusInternalServerError, resp, w, r)
 		return
 	}
-	sendOKResponse(http.StatusOK, siswa, nil, w)
+	resp.SetData(siswa)
+	sendResponse(http.StatusOK, resp, w, r)
 	return
 }
 
 // DeleteSiswa handles the DELETE SPECIFIC SISWA
 func (h *Handler) DeleteSiswa(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	var id int
-	if val, ok := vars["id"]; ok {
-		convertedVal, err := strconv.Atoi(val)
-		if err != nil {
-			singleErrResp := nmodel.Error{
-				Title:  errorParsingID,
-				Detail: errorParsingID,
-			}
-			sendNOKResponse(http.StatusInternalServerError, []nmodel.Error{singleErrResp}, w)
-			return
-		}
-		id = convertedVal
-	}
-	err := h.db.DeleteSiswa(id)
+	resp := nmodel.NewResponseFormat()
+	id, err := getVarsID(r)
 	if err != nil {
-		singleErrResp := nmodel.Error{
-			Title:  errorFindingID,
-			Detail: errorFindingID,
-		}
-		sendNOKResponse(http.StatusInternalServerError, []nmodel.Error{singleErrResp}, w)
+		resp.AddError(errorParsingID, errorParsingID)
+		sendResponse(http.StatusInternalServerError, resp, w, r)
 		return
 	}
-	resp := map[string]string{"message": fmt.Sprintf("siswa id %v deleted successfully", id)}
-	sendOKResponse(http.StatusOK, resp, nil, w)
+	err = h.db.DeleteSiswa(id)
+	if err != nil {
+		resp.AddError(errorFindingID, errorFindingID)
+		sendResponse(http.StatusInternalServerError, resp, w, r)
+		return
+	}
+	resp.SetData(map[string]string{"message": fmt.Sprintf("siswa id %v deleted successfully", id)})
+	sendResponse(http.StatusOK, resp, w, r)
 	return
 }
 
 // UpdateSiswa handles the PUT SPECIFIC SISWA
 func (h *Handler) UpdateSiswa(w http.ResponseWriter, r *http.Request) {
+	resp := nmodel.NewResponseFormat()
 	// Get ID
-	vars := mux.Vars(r)
-	var id int
-	if val, ok := vars["id"]; ok {
-		convertedVal, err := strconv.Atoi(val)
-		if err != nil {
-			singleErrResp := nmodel.Error{
-				Title:  errorParsingID,
-				Detail: errorParsingID,
-			}
-			sendNOKResponse(http.StatusInternalServerError, []nmodel.Error{singleErrResp}, w)
-			return
-		}
-		id = convertedVal
+	id, err := getVarsID(r)
+	if err != nil {
+		resp.AddError(errorParsingID, errorParsingID)
+		sendResponse(http.StatusInternalServerError, resp, w, r)
+		return
 	}
 	// Get the Body
 	decodedBody := nmodel.Siswa{}
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&decodedBody)
+	err = decoder.Decode(&decodedBody)
 	if err != nil {
-		singleErrResp := nmodel.Error{
-			Title:  errorDecodingJSONReq,
-			Detail: errorDecodingJSONReq,
-		}
-		sendNOKResponse(http.StatusBadRequest, []nmodel.Error{singleErrResp}, w)
+		resp.AddError(errorDecodingJSONReq, errorDecodingJSONReq)
+		sendResponse(http.StatusBadRequest, resp, w, r)
 		return
 	}
 	updatedSiswa, err := h.db.UpdateSiswa(id, decodedBody)
 	if err != nil {
-		singleErrResp := nmodel.Error{
-			Title:  errorUpdatingSiswa,
-			Detail: fmt.Sprintf("%v", err),
-		}
-		sendNOKResponse(http.StatusBadRequest, []nmodel.Error{singleErrResp}, w)
+		resp.AddError(errorUpdatingSiswa, err.Error())
+		sendResponse(http.StatusBadRequest, resp, w, r)
 		return
 	}
-	sendOKResponse(http.StatusOK, updatedSiswa, nil, w)
+	resp.SetData(updatedSiswa)
+	sendResponse(http.StatusOK, resp, w, r)
 	return
 }
 
@@ -182,39 +147,29 @@ func NewHandler(db DB) *Handler {
 	return &handler
 }
 
-func sendOKResponse(statusCode int, data interface{}, meta nmodel.MetaResponse, w http.ResponseWriter) error {
-	response := nmodel.ResponseFormat{}
-	if data != nil {
-		response.Data = data
-	}
-	if meta != nil {
-		response.Meta = meta
-	}
+func sendResponse(statusCode int, resp *nmodel.ResponseFormat, w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(statusCode)
-	encodedResponse, err := json.Marshal(response)
+	encodedResponse, err := resp.EncodeToJSON()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write(nil)
-		return fmt.Errorf("Unable to encode response: %v", err)
+		log.Printf("Source: %v| Destination: %v| ResponseCode: %v| ResponseLen: %v", r.RemoteAddr, r.RequestURI, statusCode, "error while encoding response")
+		return fmt.Errorf("unable to encode JSON: %v", err)
 	}
 	w.Write(encodedResponse)
+	log.Printf("| Source: %v | Destination: %v | Mehod: %v | ResponseCode: %v | ResponseLen: %v", r.RemoteAddr, r.RequestURI, r.Method, statusCode, len(encodedResponse))
 	return nil
 }
 
-func sendNOKResponse(statusCode int, errResp []nmodel.Error, w http.ResponseWriter) error {
-	response := nmodel.ResponseFormat{}
-	if errResp != nil {
-		response.Errors = errResp
+func getVarsID(r *http.Request) (id int, err error) {
+	vars := mux.Vars(r)
+	if val, ok := vars["id"]; ok {
+		convertedVal, err := strconv.Atoi(val)
+		if err != nil {
+			return id, err
+		}
+		id = convertedVal
 	}
-	w.Header().Set("content-type", "application/json")
-	w.WriteHeader(statusCode)
-	encodedResponse, err := json.Marshal(response)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(nil)
-		return fmt.Errorf("Unable to encode response: %v", err)
-	}
-	w.Write(encodedResponse)
-	return nil
+	return
 }

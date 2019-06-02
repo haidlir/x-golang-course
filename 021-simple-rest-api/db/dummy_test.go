@@ -111,3 +111,39 @@ func TestSiswa(t *testing.T) {
 		}
 	})
 }
+
+func TestRaceSiswa(t *testing.T) {
+	db := ndb.NewDummyDB()
+	// Add Siswa
+	t.Run("Add 3 Siswa Simultaniously", func(t *testing.T) {
+		siswaBaru := nmodel.Siswa{
+			Nama:  "dummy",
+			Kelas: 0,
+		}
+		go db.AddSiswa(siswaBaru)
+		go db.AddSiswa(siswaBaru)
+		db.AddSiswa(siswaBaru)
+	})
+	// Update Siswa
+	t.Run("Update 3 Siswa Simultaniously", func(t *testing.T) {
+		siswaBerubah := nmodel.Siswa{
+			Nama:  "updatedDummy",
+			Kelas: 100,
+		}
+		go db.UpdateSiswa(0, siswaBerubah)
+		go db.UpdateSiswa(1, siswaBerubah)
+		db.UpdateSiswa(2, siswaBerubah)
+	})
+	// Delete Siswa
+	t.Run("Delete 3 Siswa Simultaniously", func(t *testing.T) {
+		go db.DeleteSiswa(0)
+		go db.DeleteSiswa(1)
+		db.DeleteSiswa(2)
+	})
+	// Get All Siswa
+	t.Run("Get All 3 Req Simultaniously", func(t *testing.T) {
+		go db.GetAllSiswa()
+		go db.GetAllSiswa()
+		db.GetAllSiswa()
+	})
+}
