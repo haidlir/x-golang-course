@@ -158,7 +158,11 @@ func sendResponse(statusCode int, resp *nmodel.ResponseFormat, w http.ResponseWr
 		return fmt.Errorf("unable to encode JSON: %v", err)
 	}
 	w.Write(encodedResponse)
-	log.Printf("| Source: %v | Destination: %v | Mehod: %v | ResponseCode: %v | ResponseLen: %v", r.RemoteAddr, r.RequestURI, r.Method, statusCode, len(encodedResponse))
+	if user := r.Header.Get("user"); user != "" {
+		log.Printf("| User: %v | Source: %v | Destination: %v | Mehod: %v | ResponseCode: %v | ResponseLen: %v", user, r.RemoteAddr, r.RequestURI, r.Method, statusCode, len(encodedResponse))
+	} else {
+		log.Printf("| Source: %v | Destination: %v | Mehod: %v | ResponseCode: %v | ResponseLen: %v", r.RemoteAddr, r.RequestURI, r.Method, statusCode, len(encodedResponse))
+	}
 	return nil
 }
 

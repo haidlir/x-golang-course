@@ -10,9 +10,10 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/gorilla/mux"
 	nhandler "github.com/haidlir/x-golang-course/021-simple-rest-api/handler"
 	nmodel "github.com/haidlir/x-golang-course/021-simple-rest-api/model"
+
+	"github.com/gorilla/mux"
 )
 
 // MockedDB was made to mock DB
