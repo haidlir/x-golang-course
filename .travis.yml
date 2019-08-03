@@ -1,0 +1,45 @@
+# Use Dockerized infrastructure
+sudo: false
+
+# Use golang environnement
+language: go
+go:
+- "1.11"
+
+script:
+  - ./022-ci.sh
+
+# Cache Gcloud SDK between commands
+cache:
+  directories:
+    - "$HOME/google-cloud-sdk/"
+
+# Install services
+services:
+  - docker
+
+# Set env vars
+env:
+  global:
+    - GOOGLE_APPLICATION_CREDENTIALS=~/gcloud-service-key.json
+    - PROJECT_NAME_PRD=arkademy-course
+    - CLUSTER_NAME_PRD=arkademy-course
+    - CLOUDSDK_COMPUTE_ZONE=asia-southeast1-a
+    - DOCKER_IMAGE_NAME=arkedemy-golang-course-app
+    - KUBE_DEPLOYMENT_NAME=arkedemy-golang-course-app-deployment
+    - KUBE_DEPLOYMENT_CONTAINER_NAME=arkedemy-golang-course-app
+    - NODE_ENV=CI
+
+before_deploy:
+  - if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash; fi
+  - source /home/travis/google-cloud-sdk/path.bash.inc
+  - gcloud --quiet version
+  - gcloud --quiet components update
+  - gcloud --quiet components update kubectl
+
+deploy:
+  - provider: script
+    script: ./022-cd.sh
+    skip_cleanup: true
+    on:
+      branch: master
