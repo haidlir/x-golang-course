@@ -29,11 +29,11 @@ type Handler interface {
 func NewRouter(handler Handler) *mux.Router {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/api/siswa", handler.GetAllSiswa).Methods(http.MethodGet)
-	r.HandleFunc("/api/siswa/{id:[0-9]+}", handler.GetDetailSiswa).Methods(http.MethodGet)
-	r.HandleFunc("/api/siswa", handler.AddSiswa).Methods(http.MethodPost)
-	r.HandleFunc("/api/siswa/{id:[0-9]+}", handler.UpdateSiswa).Methods(http.MethodPut)
-	r.HandleFunc("/api/siswa/{id:[0-9]+}", handler.DeleteSiswa).Methods(http.MethodDelete)
+	r.HandleFunc("/api/v1/siswa", handler.GetAllSiswa).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/siswa/{id:[0-9]+}", handler.GetDetailSiswa).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/siswa", handler.AddSiswa).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/siswa/{id:[0-9]+}", handler.UpdateSiswa).Methods(http.MethodPut)
+	r.HandleFunc("/api/v1/siswa/{id:[0-9]+}", handler.DeleteSiswa).Methods(http.MethodDelete)
 
 	// Auth Middleware
 	amw := nauthmw.NewAuthMiddleware()
